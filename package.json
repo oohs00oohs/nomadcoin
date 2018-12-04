@@ -6,5 +6,8 @@
   "repository": "https://github.com/oohs00oohs/nomadcoin.git",
   "author": "tndyd <tndyd5390@naver.com>",
   "license": "MIT",
-  "private": false
+  "private": false,
+  "dependencies": {
+    "crypto-js": "^3.1.9-1"
+  }
 }
