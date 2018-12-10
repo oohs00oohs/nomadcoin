@@ -27,6 +27,8 @@ const getLastBlock = () => blockchain[blockchain.length -1];
 //타임 스탬프를 생성하는 함수
 const getTimestamp = () => new Date().getTime() / 1000;
 
+const getBlockchain = () => blockchain;
+
 //해쉬를 생성하는 함수
 const createHash = (index, previousHash, timestamp, data) => 
     CryptoJS.SHA256(
@@ -51,6 +53,7 @@ const createNewBlock = data => {
         newTimestamp,
         data
     );
+    addBlockToChain(newBlock);
     return newBlock;
 }
 
@@ -93,7 +96,6 @@ const isChainValid = (candidateChain) => {
     /**
      * 첫번째로 블록체인은 같은 하나의 제네시스 블록 출신이여야 한다.
      */
-
     const isGenesisValid = block => {
         return JSON.stringify(block) === JSON.stringify(genesisBlock);
     }
@@ -112,4 +114,30 @@ const isChainValid = (candidateChain) => {
     }
     
     return true;
+}
+
+//블록체인을 교체하기 위한 함수
+const replaceChain = candidateChain => {
+    //새로운 체인의 길이가 더 길다면 교체한다 항상 더 긴 블록체인을 원하기 때문에
+    if(isChainValid(candidateChain) && candidateChain.length > getBlockchain().length){
+        blockchain = candidateChain;
+        return true;
+    }else{
+        return false;
+    }
+};
+
+//새로운 블록을 체인에 추가하는 함수
+const addBlockToChain = candidateBlock => {
+    if(isNewBlockValid(candidateBlock, getLastBlock())){
+        blockchain.push(candidateBlock);
+        return true;
+    }else{
+        return false;
+    }
+}
+
+module.exports = {
+    getBlockchain,
+    createNewBlock
 }

@@ -1,0 +1,17 @@
+GET HTTP://localhost:3000/blocks
+
+###
+POST HTTP://localhost:3000/blocks
+content-type: application/json
+
+{
+    "data" : "Second block baby!!"
+}
+
+###
+POST HTTP://localhost:3000/peers
+content-type: application/json
+
+{
+    "peer" : "ws://localhost:4000"
+}
