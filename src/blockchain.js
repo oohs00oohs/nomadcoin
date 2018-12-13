@@ -60,8 +60,8 @@ const createNewBlock = data => {
 const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);
 
 //생성된 블록을 검증하는 함수
-const isNewBlockValid = (candidateBlack, latestBlock) => {
-    if(!isNewStructureValid(candidateBlack)){
+const isBlockValid = (candidateBlack, latestBlock) => {
+    if(!isBlockStructrueValid(candidateBlack)){
         //새로 등록될 블록의 구조를 검증
         console.log('The candidate block structure is not valid');
         return false;
@@ -81,7 +81,7 @@ const isNewBlockValid = (candidateBlack, latestBlock) => {
 }
 
 //생성된 블록의 구조를 검증하는 함수
-const isNewStructureValid = (block) => {
+const isBlockStructrueValid = (block) => {
     return (
         typeof block.index === 'number' && 
         typeof block.hash === 'string' &&
@@ -108,7 +108,7 @@ const isChainValid = (candidateChain) => {
 
     //때때로 블록체인을 교체하기도 하기 때문에 새로운 체인의 블록을 모두 검증해야 한다. 제네시스 블록은 동일 블록인지 위에서 체크했기 때문에 인덱스 1부터 시작한다.
     for(let i = 1; i< candidateChain.length; i++){
-        if(!isNewBlockValid(candidateChain[i], candidateChain[i-1])){
+        if(!isBlockValid(candidateChain[i], candidateChain[i-1])){
             return false;
         }
     }
@@ -129,7 +129,7 @@ const replaceChain = candidateChain => {
 
 //새로운 블록을 체인에 추가하는 함수
 const addBlockToChain = candidateBlock => {
-    if(isNewBlockValid(candidateBlock, getLastBlock())){
+    if(isBlockValid(candidateBlock, getLastBlock())){
         blockchain.push(candidateBlock);
         return true;
     }else{
@@ -140,5 +140,6 @@ const addBlockToChain = candidateBlock => {
 module.exports = {
     getBlockchain,
     createNewBlock,
-    getLastBlock
+    getLastBlock,
+    isBlockStructrueValid
 }

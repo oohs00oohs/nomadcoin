@@ -1,7 +1,7 @@
 const WebSockets = require("ws");
 Blockchain = require("./blockchain");
 
-const {getLastBlock} = Blockchain;
+const {getLastBlock, isBlockStructrueValid} = Blockchain;
 /**
  * p2p서버에 연결되면 가장 먼저 최근 블록을 불러오고
  * 그다음 모든 블록을 불러온다.
@@ -72,14 +72,34 @@ const handleSocketMessages = ws => {
         console.log(message);
         switch(message.type){
             case GET_LATEST :
-                sendMessage(ws, getLastBlock());
+                sendMessage(ws, responseLatest());
+                break;
+            case BLOCKCHAIN_RESPONSE : 
+                const receivedBlocks = message.data;
+                if(receivedBlocks === null){
+                    break;
+                }
+                handleBlockchainResponse(receivedBlocks);
                 break;
         }
     })
 }
 
+const handleBlockchainResponse = receivedBlocks => {
+    if(receivedBlocks.length === 0){
+        console.log("Received blocks have a length of 0");
+        return;
+    }
+    const latestBlockReceived = receivedBlocks[receivedBlocks.length -1];
+    if(!isBlockStructrueValid(latestBlockReceived)){
+        console.log("The block structure of the block receive is not valid");
+        return;
+    }
+}
+
 const sendMessage = (ws, message) => ws.send(JSON.stringify(message));
 
+const responseLatest = () => blockchainResponse([getLastBlock()]);
 
 const handleSocketError = ws => {
     const closeSocketConnection = ws => {
