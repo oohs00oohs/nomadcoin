@@ -22,7 +22,7 @@ const genesisBlock = new Block(
 let blockchain = [genesisBlock];
 
 //마지막에 생성된 블록을 가져오는 함수
-const getLastBlock = () => blockchain[blockchain.length -1];
+const getNewestBlock = () => blockchain[blockchain.length -1];
 
 //타임 스탬프를 생성하는 함수
 const getTimestamp = () => new Date().getTime() / 1000;
@@ -37,7 +37,7 @@ const createHash = (index, previousHash, timestamp, data) =>
 
 //새로운 블록을 생성하는 함수
 const createNewBlock = data => {
-    const previousBlock = getLastBlock();
+    const previousBlock = getNewestBlock();
     const newBlockIndex = previousBlock.index + 1;
     const newTimestamp = getTimestamp();
     const newHash = createHash(
@@ -54,6 +54,7 @@ const createNewBlock = data => {
         data
     );
     addBlockToChain(newBlock);
+    require("./p2p").broadcastNewBlock();
     return newBlock;
 }
 
@@ -129,7 +130,7 @@ const replaceChain = candidateChain => {
 
 //새로운 블록을 체인에 추가하는 함수
 const addBlockToChain = candidateBlock => {
-    if(isBlockValid(candidateBlock, getLastBlock())){
+    if(isBlockValid(candidateBlock, getNewestBlock())){
         blockchain.push(candidateBlock);
         return true;
     }else{
@@ -140,6 +141,8 @@ const addBlockToChain = candidateBlock => {
 module.exports = {
     getBlockchain,
     createNewBlock,
-    getLastBlock,
-    isBlockStructrueValid
+    getNewestBlock,
+    isBlockStructrueValid,
+    addBlockToChain,
+    replaceChain
 }

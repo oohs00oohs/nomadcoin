@@ -1,7 +1,7 @@
 const WebSockets = require("ws");
 Blockchain = require("./blockchain");
 
-const {getLastBlock, isBlockStructrueValid} = Blockchain;
+const {getNewestBlock, isBlockStructrueValid, addBlockToChain, replaceChain, getBlockchain} = Blockchain;
 /**
  * p2p서버에 연결되면 가장 먼저 최근 블록을 불러오고
  * 그다음 모든 블록을 불러온다.
@@ -74,6 +74,9 @@ const handleSocketMessages = ws => {
             case GET_LATEST :
                 sendMessage(ws, responseLatest());
                 break;
+            case GET_ALL : 
+                sendMessage(ws, responseAll());
+                break;
             case BLOCKCHAIN_RESPONSE : 
                 const receivedBlocks = message.data;
                 if(receivedBlocks === null){
@@ -91,15 +94,37 @@ const handleBlockchainResponse = receivedBlocks => {
         return;
     }
     const latestBlockReceived = receivedBlocks[receivedBlocks.length -1];
+    
     if(!isBlockStructrueValid(latestBlockReceived)){
         console.log("The block structure of the block receive is not valid");
         return;
+    }
+
+    const newestBlock = getNewestBlock();
+    if(latestBlockReceived.index > newestBlock.index){
+        //이전블록의 해쉬와 지금 블록의 이전 해쉬와 같은지 확인
+        if(newestBlock.hash === latestBlockReceived.previousHash){
+            if(addBlockToChain(latestBlockReceived)){
+                broadcastNewBlock();
+            }
+        }else if(receivedBlocks.length === 1){
+            //우리가 받은 블록이 한개밖에 없으면 모든 블록체인을 가져옴
+            sendMessageToAll(getAll());
+        }else{
+            replaceChain(receivedBlocks);
+        }
     }
 }
 
 const sendMessage = (ws, message) => ws.send(JSON.stringify(message));
 
-const responseLatest = () => blockchainResponse([getLastBlock()]);
+const sendMessageToAll = message => sockets.forEach(ws => sendMessage(ws, message));
+
+const responseLatest = () => blockchainResponse([getNewestBlock()]);
+
+const responseAll = () => blockchainResponse(getBlockchain());
+
+const broadcastNewBlock = () => sendMessageToAll(responseLatest())
 
 const handleSocketError = ws => {
     const closeSocketConnection = ws => {
@@ -119,5 +144,6 @@ const connectToPeers = newPeer => {
 
 module.exports={
     startP2PServer,
-    connectToPeers
+    connectToPeers,
+    broadcastNewBlock
 }
