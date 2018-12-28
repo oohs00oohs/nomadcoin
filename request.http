@@ -5,7 +5,7 @@ POST HTTP://localhost:3000/blocks
 content-type: application/json
 
 {
-    "data" : "hello block baby!!"
+    "data" : "second blocks"
 }
 
 ###

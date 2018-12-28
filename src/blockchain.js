@@ -1,12 +1,18 @@
 const CryptoJS = require('crypto-js');
+const hexToBinary = require('hex-to-binary');
+
+const BLOCK_GENERATION_INTERVAL = 10;//몇분마다 블록이 채굴될지(초단위)
+const DIFFCULTY_ADJUSMENT_INTERVAL = 10;//몇개마다 블록의 난이도를 조절할 것인지(갯수)
 
 class Block {
-    constructor(index, hash, previousHash, timestamp, data){
+    constructor(index, hash, previousHash, timestamp, data, difficulty, nonce){
         this.index = index;
         this.hash = hash;
         this.previousHash = previousHash;
         this.timestamp = timestamp;
         this.data = data;
+        this.difficulty = difficulty;
+        this.nonce = nonce;
     }
 }
 
@@ -16,7 +22,9 @@ const genesisBlock = new Block(
     '2C4CEB90344F20CC4C77D626247AED3ED530C1AEE3E6E85AD494498B17414CAC',
     null,
     1520312194926,
-    "This is the genesis!!"
+    "This is the genesis!!",
+    0,
+    0
 );
 
 let blockchain = [genesisBlock];
@@ -30,9 +38,9 @@ const getTimestamp = () => new Date().getTime() / 1000;
 const getBlockchain = () => blockchain;
 
 //해쉬를 생성하는 함수
-const createHash = (index, previousHash, timestamp, data) => 
+const createHash = (index, previousHash, timestamp, data, difficulty, nonce) => 
     CryptoJS.SHA256(
-        index + previousHash + timestamp + JSON.stringify(data)
+        index + previousHash + timestamp + JSON.stringify(data) + difficulty + nonce
     ).toString();
 
 //새로운 블록을 생성하는 함수
@@ -40,25 +48,58 @@ const createNewBlock = data => {
     const previousBlock = getNewestBlock();
     const newBlockIndex = previousBlock.index + 1;
     const newTimestamp = getTimestamp();
-    const newHash = createHash(
-        newBlockIndex, 
-        previousBlock.hash, 
-        newTimestamp, 
-        data
-    );
-    const newBlock = new Block(
+    const diffculty = findDiffculty();
+    const newBlock = findBlock(
         newBlockIndex,
-        newHash,
         previousBlock.hash,
         newTimestamp,
-        data
+        data,
+        diffculty//난이도임
     );
     addBlockToChain(newBlock);
     require("./p2p").broadcastNewBlock();
     return newBlock;
 }
 
-const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);
+const findDiffculty = () => {
+    const newestBlock = getNewestBlock();
+    if(newestBlock.index % DIFFCULTY_ADJUSMENT_INTERVAL === 0 && newestBlock.index !== 0){
+        //마지막 블록의 난이도 조정 주기가 일치하고 제네시스 블록이 아니라면 새로운 난이도를 계한 할 것임
+
+    }else{
+        //마지막 블록의 난이도 조정 주기가 일치하지 않거나 제네시스 블록이라면 난이도 유지
+        return newestBlock.diffculty;
+    }
+}
+const findBlock = (index, previousHash, timestamp, data, difficulty) => {
+    let nonce = 0;
+    while(true){
+        console.log('current nonce : ' + nonce);
+        const hash = createHash(
+            index,
+            previousHash,
+            timestamp,
+            data,
+            difficulty,
+            nonce
+        );
+        //to do : check amount of zeros (hashMatchesDiffculty)
+        if(hashMatchesDiffculty(hash, difficulty)){
+            return new Block(index, hash, previousHash, timestamp, data, difficulty, nonce);
+        }
+        nonce++;
+        
+    }
+}
+
+const hashMatchesDiffculty = (hash, difficulty) => {
+    const hashInBinary = hexToBinary(hash);
+    const requiredZeros = "0".repeat(difficulty);
+    console.log('Trying diffculty:', difficulty, 'with hash', hashInBinary);
+    return hashInBinary.startsWith(requiredZeros);
+}
+
+const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data, block.difficulty, block.nonce);
 
 //생성된 블록을 검증하는 함수
 const isBlockValid = (candidateBlack, latestBlock) => {
