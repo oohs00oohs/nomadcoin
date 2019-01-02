@@ -2,7 +2,7 @@ const CryptoJS = require('crypto-js');
 const hexToBinary = require('hex-to-binary');
 
 const BLOCK_GENERATION_INTERVAL = 10;//몇분마다 블록이 채굴될지(초단위)
-const DIFFCULTY_ADJUSMENT_INTERVAL = 10;//몇개마다 블록의 난이도를 조절할 것인지(갯수)
+const DIFFICULTY_ADJUSMENT_INTERVAL = 10;//몇개마다 블록의 난이도를 조절할 것인지(갯수)
 
 class Block {
     constructor(index, hash, previousHash, timestamp, data, difficulty, nonce){
@@ -21,7 +21,7 @@ const genesisBlock = new Block(
     0,
     '2C4CEB90344F20CC4C77D626247AED3ED530C1AEE3E6E85AD494498B17414CAC',
     null,
-    1520312194926,
+    0000000000,
     "This is the genesis!!",
     0,
     0
@@ -33,7 +33,7 @@ let blockchain = [genesisBlock];
 const getNewestBlock = () => blockchain[blockchain.length -1];
 
 //타임 스탬프를 생성하는 함수
-const getTimestamp = () => new Date().getTime() / 1000;
+const getTimestamp = () => Math.round(new Date().getTime() / 1000);
 
 const getBlockchain = () => blockchain;
 
@@ -48,13 +48,13 @@ const createNewBlock = data => {
     const previousBlock = getNewestBlock();
     const newBlockIndex = previousBlock.index + 1;
     const newTimestamp = getTimestamp();
-    const diffculty = findDiffculty();
+    const difficulty = findDiffculty();
     const newBlock = findBlock(
         newBlockIndex,
         previousBlock.hash,
         newTimestamp,
         data,
-        diffculty//난이도임
+        difficulty//난이도임
     );
     addBlockToChain(newBlock);
     require("./p2p").broadcastNewBlock();
@@ -63,14 +63,31 @@ const createNewBlock = data => {
 
 const findDiffculty = () => {
     const newestBlock = getNewestBlock();
-    if(newestBlock.index % DIFFCULTY_ADJUSMENT_INTERVAL === 0 && newestBlock.index !== 0){
+    if(newestBlock.index % DIFFICULTY_ADJUSMENT_INTERVAL === 0 && newestBlock.index !== 0){
         //마지막 블록의 난이도 조정 주기가 일치하고 제네시스 블록이 아니라면 새로운 난이도를 계한 할 것임
-
+        console.log(calculateNewDifficulty(newestBlock, getBlockchain()));
+        return calculateNewDifficulty(newestBlock, getBlockchain());
     }else{
         //마지막 블록의 난이도 조정 주기가 일치하지 않거나 제네시스 블록이라면 난이도 유지
-        return newestBlock.diffculty;
+        return newestBlock.difficulty;
     }
 }
+
+const calculateNewDifficulty = (newestBlock, blockchain) => {
+   const lastCalculatedBlock =
+     blockchain[blockchain.length - DIFFICULTY_ADJUSMENT_INTERVAL];
+   const timeExpected =
+     BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSMENT_INTERVAL;
+   const timeTaken = newestBlock.timestamp - lastCalculatedBlock.timestamp;
+   if (timeTaken < timeExpected / 2) {
+     return lastCalculatedBlock.difficulty + 1;
+   } else if (timeTaken > timeExpected * 2) {
+     return lastCalculatedBlock.difficulty - 1;
+   } else {
+     return lastCalculatedBlock.difficulty;
+   }
+ };
+
 const findBlock = (index, previousHash, timestamp, data, difficulty) => {
     let nonce = 0;
     while(true){
@@ -101,6 +118,13 @@ const hashMatchesDiffculty = (hash, difficulty) => {
 
 const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data, block.difficulty, block.nonce);
 
+const isTimeStampValid = (newBlock, oldBlock) => {
+    return (
+        oldBlock.timestamp - 60 < newBlock.timestamp && 
+        newBlock.timestamp - 60 < getTimestamp()
+    );
+}
+
 //생성된 블록을 검증하는 함수
 const isBlockValid = (candidateBlack, latestBlock) => {
     if(!isBlockStructrueValid(candidateBlack)){
@@ -117,6 +141,9 @@ const isBlockValid = (candidateBlack, latestBlock) => {
         return false;
     }else if(getBlockHash(candidateBlack) !== candidateBlack.hash){
         console.log('The has of this block is invalid');
+        return false;
+    } else if(!isTimeStampValid(candidateBlack, latestBlock)) {
+        console.log('The timestamp of this is dodgy');
         return false;
     }
     return true;
@@ -158,10 +185,17 @@ const isChainValid = (candidateChain) => {
     return true;
 }
 
+const sumDifficulty = anyBlockchain => 
+    anyBlockchain
+    .map(boock => block.difficulty)
+    .map(difficulty => Math.pow(difficulty, 2))
+    .reduce((a, b) => a + b)
+    ;
+
 //블록체인을 교체하기 위한 함수
 const replaceChain = candidateChain => {
     //새로운 체인의 길이가 더 길다면 교체한다 항상 더 긴 블록체인을 원하기 때문에
-    if(isChainValid(candidateChain) && candidateChain.length > getBlockchain().length){
+    if(isChainValid(candidateChain) && sumDifficulty(candidateChain) > sumDifficulty(getBlockchain())){
         blockchain = candidateChain;
         return true;
     }else{
