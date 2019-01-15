@@ -47,6 +47,7 @@ const getTxId = tx => {
     return CryptoJS.SHA256(txInContent + txOutContent + tx.timestamp).toString();
 };
 
+
 const findUTxOut = (txOutId, txOutIndex, uTxOutList) => {
     return uTxOutList.find(
         uTxO => uTxO.txOutId === txOutId && uTxO.txOutIndex === txOutIndex

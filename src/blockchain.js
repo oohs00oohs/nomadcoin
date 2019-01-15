@@ -1,7 +1,7 @@
 const CryptoJS = require("crypto-js"),
     _ = require("lodash"),
     Wallet = require("./wallet"),
-    Mempool = require("./memPool"),
+    Mempool = require("./mempool"),
     Transactions = require("./transactions"),
     hexToBinary = require("hex-to-binary");
 
@@ -31,19 +31,31 @@ class Block {
     }
 }
 
+const genesisTx = {
+    txIns: [{ signature: "", txOutId: "", txOutIndex: 0 }],
+    txOuts: [
+        {
+            address:
+                "04ce56f95327924db0d5dc433b54a4cc32847139450a1c290391677ded9e815474cf7e3d8483b6249cd3551449d09620179bf31658c36f8b2f37cf5593d1ab0428",
+            amount: 50
+        }
+    ],
+    id: "3d7cbeb93c81603e09e083787f2e0cf695d946ebdd5e58efb0ed6e2fd024a6f8"
+};
+
 const genesisBlock = new Block(
     0,
-    "2C4CEB90344F20CC4C77D626247AED3ED530C1AEE3E6E85AD494498B17414CAC",
-    null,
-    1520408084,
-    "This is the genesis!!",
+    "82a3ecd4e76576fccce9999d560a31c7ad1faff4a3f4c6e7507a227781a8537f",
+    "",
+    1518512316,
+    [genesisTx],
     0,
     0
 );
 
 let blockchain = [genesisBlock];
 
-let uTxOuts = [];
+let uTxOuts = processTxs(blockchain[0].data, [], 0);
 
 const getNewestBlock = () => blockchain[blockchain.length - 1];
 
@@ -262,6 +274,7 @@ const sendTx = (address, amount) => {
         getUTxOutList(),
         getMempool()
     );
+    console.log(getMempool());
     addToMempool(tx, getUTxOutList());
     return tx;
 };

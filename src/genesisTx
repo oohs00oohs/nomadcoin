@@ -1,0 +1,11 @@
+const genesisTx = {
+    txIns: [{ signature: "", txOutId: "", txOutIndex: 0 }],
+    txOuts: [
+        {
+            address:
+                "04ce56f95327924db0d5dc433b54a4cc32847139450a1c290391677ded9e815474cf7e3d8483b6249cd3551449d09620179bf31658c36f8b2f37cf5593d1ab0428",
+            amount: 50
+        }
+    ],
+    id: "3d7cbeb93c81603e09e083787f2e0cf695d946ebdd5e58efb0ed6e2fd024a6f8"
+};
