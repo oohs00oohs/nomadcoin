@@ -41,7 +41,9 @@ const blockchainResponse = data => {
 const getSockets = () => sockets;
 
 const startP2PServer = server => {
-    const wsServer = new WebSockets.Server({ server });
+    const wsServer = new WebSockets.Server({
+        server
+    });
     wsServer.on("connection", ws => {
         initSocketConnection(ws);
     });

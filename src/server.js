@@ -6,10 +6,23 @@ const express = require("express"),
     Mempool = require("./mempool"),
     Wallet = require("./wallet");
 
-const { getBlockchain, createNewBlock, getAccountBalance, sendTx } = Blockchain;
-const { startP2PServer, connectToPeers } = P2P;
-const { initWallet } = Wallet;
-const { getMempool } = Mempool;
+const {
+    getBlockchain,
+    createNewBlock,
+    getAccountBalance,
+    sendTx
+} = Blockchain;
+const {
+    startP2PServer,
+    connectToPeers
+} = P2P;
+const {
+    initWallet,
+    getPublicFromWallet
+} = Wallet;
+const {
+    getMempool
+} = Mempool;
 
 // Psssst. Don't forget about typing 'export HTTP_PORT=4000' in your console
 const PORT = process.env.HTTP_PORT || 3000;
@@ -29,24 +42,39 @@ app
     });
 
 app.post("/peers", (req, res) => {
-    const { body: { peer } } = req;
+    const {
+        body: {
+            peer
+        }
+    } = req;
     connectToPeers(peer);
     res.send();
 });
 
 app.get("/me/balance", (req, res) => {
     const balance = getAccountBalance();
-    res.send({ balance });
+    res.send({
+        balance
+    });
 });
+
+app.get("/me/address", (rea, res) => {
+    res.send(getPublicFromWallet());
+})
 
 app
     .route("/transactions")
-    .get((req, res) => { 
+    .get((req, res) => {
         res.send(getMempool());
     })
     .post((req, res) => {
         try {
-            const { body: { address, amount } } = req;
+            const {
+                body: {
+                    address,
+                    amount
+                }
+            } = req;
             if (address === undefined || amount === undefined) {
                 throw Error("Please specify and address and an amount");
             } else {

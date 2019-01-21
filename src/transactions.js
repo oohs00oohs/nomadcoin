@@ -47,7 +47,6 @@ const getTxId = tx => {
     return CryptoJS.SHA256(txInContent + txOutContent + tx.timestamp).toString();
 };
 
-
 const findUTxOut = (txOutId, txOutIndex, uTxOutList) => {
     return uTxOutList.find(
         uTxO => uTxO.txOutId === txOutId && uTxO.txOutIndex === txOutIndex
@@ -256,8 +255,8 @@ const validateCoinbaseTx = (tx, blockIndex) => {
     } else if (tx.txOuts[0].amount !== COINBASE_AMOUNT) {
         console.log(
             `Coinbase TX should have an amount of only ${COINBASE_AMOUNT} and it has ${
-            tx.txOuts[0].amount
-            }`
+        tx.txOuts[0].amount
+      }`
         );
         return false;
     } else {

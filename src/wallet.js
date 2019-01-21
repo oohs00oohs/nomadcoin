@@ -58,7 +58,10 @@ const findAmountInUTxOuts = (amountNeeded, myUTxOuts) => {
         currentAmount = currentAmount + myUTxOut.amount;
         if (currentAmount >= amountNeeded) {
             const leftOverAmount = currentAmount - amountNeeded;
-            return { includedUTxOuts, leftOverAmount };
+            return {
+                includedUTxOuts,
+                leftOverAmount
+            };
         }
     }
     throw Error("Not enough founds");
@@ -87,7 +90,7 @@ const filterUTxOutsFromMempool = (uTxOutList, mempool) => {
         const txIn = _.find(
             txIns,
             txIn =>
-                txIn.txOutIndex === uTxOut.txOutIndex && txIn.txOutId === uTxOut.txOutId
+            txIn.txOutIndex === uTxOut.txOutIndex && txIn.txOutId === uTxOut.txOutId
         );
         if (txIn !== undefined) {
             removables.push(uTxOut);
@@ -103,7 +106,10 @@ const createTx = (receiverAddress, amount, privateKey, uTxOutList, memPool) => {
 
     const filteredUTxOuts = filterUTxOutsFromMempool(myUTxOuts, memPool);
 
-    const { includedUTxOuts, leftOverAmount } = findAmountInUTxOuts(
+    const {
+        includedUTxOuts,
+        leftOverAmount
+    } = findAmountInUTxOuts(
         amount,
         filteredUTxOuts
     );
