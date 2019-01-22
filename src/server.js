@@ -5,6 +5,7 @@ const express = require("express"),
     P2P = require("./p2p"),
     Mempool = require("./mempool"),
     _ = require("lodash"),
+    cors = require("cors"),
     Wallet = require("./wallet");
 
 const {
@@ -32,6 +33,7 @@ const PORT = process.env.HTTP_PORT || 3000;
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 app.use(morgan("combined"));
 
 app
