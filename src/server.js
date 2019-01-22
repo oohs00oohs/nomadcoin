@@ -4,13 +4,15 @@ const express = require("express"),
     Blockchain = require("./blockchain"),
     P2P = require("./p2p"),
     Mempool = require("./mempool"),
+    _ = require("lodash"),
     Wallet = require("./wallet");
 
 const {
     getBlockchain,
     createNewBlock,
     getAccountBalance,
-    sendTx
+    sendTx,
+    getUTxOutList
 } = Blockchain;
 const {
     startP2PServer,
@@ -18,7 +20,8 @@ const {
 } = P2P;
 const {
     initWallet,
-    getPublicFromWallet
+    getPublicFromWallet,
+    getBalance
 } = Wallet;
 const {
     getMempool
@@ -62,6 +65,27 @@ app.get("/me/address", (rea, res) => {
     res.send(getPublicFromWallet());
 })
 
+app.get("/blocks/:hash", (req, res) => {
+    const {params : {hash}} = req;
+    const block = _.find(getBlockchain(), {hash});
+    if(block === undefined) {
+        res.status(400).send("Block not found");
+    } else {
+        res.send(block);
+    }
+})
+
+app.get("/transaction/:id", (req, res) => {
+    const tx = _(getBlockchain())
+        .map(blocks => blocks.data)
+        .flatten()
+        .find({id : req.params.id});
+    if(tx === undefined) {
+        res.status(400).send("Transaction not found");
+    }
+    res.send(tx);
+})
+
 app
     .route("/transactions")
     .get((req, res) => {
@@ -85,6 +109,13 @@ app
             res.status(400).send(e.message);
         }
     });
+
+app.get("/address/:address", (req, res) => {
+    const {params : {address}} = req;
+    const balance = getBalance(address, getUTxOutList());
+    res.send({balance});
+
+})
 
 const server = app.listen(PORT, () =>
     console.log(`Nomadcoin HTTP Server running on port ${PORT} ✅`)
